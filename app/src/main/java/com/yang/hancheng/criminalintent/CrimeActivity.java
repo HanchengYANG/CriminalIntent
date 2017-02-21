@@ -1,21 +1,24 @@
 package com.yang.hancheng.criminalintent;
 
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
-import android.support.v4.app.FragmentManager;
 
-public class CrimeActivity extends FragmentActivity {
+/**
+ * Project : CriminalIntent
+ * Created by Hancheng Yang ( hancheng.yang@eptender.com )
+ * Date : 21/02/2017, 15:09
+ * Description :
+ **/
+
+public class CrimeActivity extends SingleFragmentActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_crime);
-        FragmentManager fm = getSupportFragmentManager();
-        Fragment mFragment = fm.findFragmentById(R.id.fragment_container);
-        if(mFragment == null){
-            mFragment = new CrimeFragment();
-            fm.beginTransaction().add(R.id.fragment_container, mFragment).commit();
-        }
+    }
+
+    @Override
+    protected Fragment createFragment() {
+        return new CrimeFragment();
     }
 }
