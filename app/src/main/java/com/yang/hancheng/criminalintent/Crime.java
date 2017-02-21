@@ -10,43 +10,43 @@ import java.util.UUID;
  * Description :
  **/
 
-class Crime {
+public class Crime {
 
     private UUID mId;
     private String mTitle;
     private Date mDate;
     private boolean mSolved;
 
-    Crime(){
+    public Crime(){
         mId = UUID.randomUUID();
         mDate = new Date();
     }
 
-    UUID getId() {
+    public UUID getId() {
         return mId;
     }
 
-    String getTitle() {
+    public String getTitle() {
         return mTitle;
     }
 
-    void setTitle(String title) {
+    public void setTitle(String title) {
         mTitle = title;
     }
 
-    Date getDate() {
+    public Date getDate() {
         return mDate;
     }
 
-    void setDate(Date date) {
+    public void setDate(Date date) {
         mDate = date;
     }
 
-    boolean isSolved() {
+    public boolean isSolved() {
         return mSolved;
     }
 
-    void setSolved(boolean solved) {
+    public void setSolved(boolean solved) {
         mSolved = solved;
     }
 

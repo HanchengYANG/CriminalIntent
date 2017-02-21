@@ -13,7 +13,7 @@ import java.util.UUID;
  * Description :
  **/
 
-class CrimeLab {
+public class CrimeLab {
     private static CrimeLab sCrimeLab;
     private List<Crime> mCrimes;
 
