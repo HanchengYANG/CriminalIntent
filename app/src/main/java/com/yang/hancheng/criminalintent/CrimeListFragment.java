@@ -12,7 +12,6 @@ import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.TextView;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Project : CriminalIntent
@@ -22,8 +21,6 @@ import java.util.UUID;
  **/
 
 public class CrimeListFragment extends Fragment {
-    public static final int REQUEST_CRIME = 1;
-    public static final String KEY_CRIME_ID = "CRIME_UUID";
     private RecyclerView mCrimeRecyclerView;
     private CrimeAdapter mAdapter;
 
@@ -53,8 +50,8 @@ public class CrimeListFragment extends Fragment {
             if(v == mSolvedCheckBox){
                 mCrime.setSolved(mSolvedCheckBox.isChecked());
             } else {
-                Intent intent = CrimeActivity.newIntent(getActivity(), mCrime.getId());
-                startActivityForResult(intent, REQUEST_CRIME);
+                Intent intent = CrimePagerActivity.newIntent(getActivity(), mCrime.getId());
+                startActivity(intent);
             }
         }
     }
@@ -97,19 +94,7 @@ public class CrimeListFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        switch(requestCode){
-            case REQUEST_CRIME:
-                Crime modifiedCrime = CrimeLab.get(getActivity()).getCrime((UUID)data.getSerializableExtra(KEY_CRIME_ID));
-                int crimeIndex = CrimeLab.get(getActivity()).getCrimes().indexOf(modifiedCrime);
-                mAdapter.notifyItemChanged(crimeIndex);
-                break;
-            default:
-                break;
-        }
+        updateUI();
     }
 
     private void updateUI(){
@@ -118,6 +103,8 @@ public class CrimeListFragment extends Fragment {
         if(mAdapter == null) {
             mAdapter = new CrimeAdapter(crimes);
             mCrimeRecyclerView.setAdapter(mAdapter);
+        } else {
+            mAdapter.notifyDataSetChanged();
         }
     }
 }
