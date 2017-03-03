@@ -14,8 +14,11 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Created by hanch on 2017/3/2.
- */
+ * Project : CriminalIntent
+ * Created by Hancheng Yang ( hancheng.yang@eptender.com )
+ * Date : 2017/3/2, 10:34
+ * Description :
+ **/
 
 public class CrimePagerActivity extends FragmentActivity {
     private static final String EXTRA_CRIME_ID = "com.yang.hancheng.criminalintent.crime_id";
