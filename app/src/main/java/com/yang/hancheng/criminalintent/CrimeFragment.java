@@ -2,7 +2,11 @@ package com.yang.hancheng.criminalintent;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -31,6 +35,10 @@ import java.util.UUID;
 
 public class CrimeFragment extends Fragment implements View.OnClickListener {
 
+    private static final int REQUEST_DATE = 0;
+    private static final int REQUEST_TIME = 1;
+    private static final int REQEST_CONTACT = 2;
+
     private static final String ARG_CRIME_ID = "crime_id";
     private static final String DIALOG_DATE = "DialogDate";
     private static final String DIALOG_TIME = "DialogTime";
@@ -40,7 +48,11 @@ public class CrimeFragment extends Fragment implements View.OnClickListener {
     private EditText mTitleField;
     private Button mDateButton;
     private Button mTimeButton;
+    private Button mSuspectButton;
+    private Button mReportButton;
     private CheckBox mSolvedCheckBox;
+
+    private Intent pickContact;
 
     public static CrimeFragment newInstance(UUID crimeId){
         Bundle args = new Bundle();
@@ -89,10 +101,21 @@ public class CrimeFragment extends Fragment implements View.OnClickListener {
 
         mDateButton = (Button)v.findViewById(R.id.crime_date);
         mTimeButton = (Button)v.findViewById(R.id.crime_time);
+        mReportButton = (Button)v.findViewById(R.id.crime_report);
+        mSuspectButton = (Button)v.findViewById(R.id.crime_suspect);
         mDateButton.setOnClickListener(this);
         mTimeButton.setOnClickListener(this);
+        mReportButton.setOnClickListener(this);
+        mSuspectButton.setOnClickListener(this);
+        if(mCrime.getSuspect() != null){
+            mSuspectButton.setText(mCrime.getSuspect());
+        }
+        PackageManager packageManager = getActivity().getPackageManager();
+        pickContact = new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
+        if(packageManager.resolveActivity(pickContact, PackageManager.MATCH_DEFAULT_ONLY) == null) {
+            mSuspectButton.setEnabled(false);
+        }
         updateDate();
-
         mSolvedCheckBox = (CheckBox)v.findViewById(R.id.crime_solved);
         mSolvedCheckBox.setChecked(mCrime.isSolved());
         mSolvedCheckBox.setOnCheckedChangeListener( new CompoundButton.OnCheckedChangeListener() {
@@ -124,25 +147,65 @@ public class CrimeFragment extends Fragment implements View.OnClickListener {
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if(resultCode != Activity.RESULT_OK){
+        if(resultCode != Activity.RESULT_OK || data == null){
             return;
         }
         Date newDate = null;
         switch (requestCode){
-            case DatePickerFragment.REQUEST_DATE:
+            case REQUEST_DATE:
                 newDate = (Date) data.getSerializableExtra(DatePickerFragment.EXTRA_DATE);
+                mCrime.setDate(newDate);
+                updateDate();
                 break;
-            case DatePickerFragment.REQUEST_TIME:
+            case REQUEST_TIME:
                 newDate = (Date) data.getSerializableExtra(DatePickerFragment.EXTRA_TIME);
+                mCrime.setDate(newDate);
+                updateDate();
+                break;
+            case REQEST_CONTACT:
+                Uri contactUri = data.getData();
+                String[] queryFields = new String[] {
+                        ContactsContract.Contacts.DISPLAY_NAME
+                };
+                Cursor cursor = getActivity().getContentResolver().query(contactUri, queryFields, null, null, null);
+                try {
+                    if(cursor.getCount() != 0) {
+                        cursor.moveToFirst();
+                        String suspect = cursor.getString(0);
+                        mCrime.setSuspect(suspect);
+                        mSuspectButton.setText(suspect);
+                    }
+                } finally {
+                    cursor.close();
+                }
+                break;
+            default:
                 break;
         }
-        mCrime.setDate(newDate);
-        updateDate();
     }
 
     private void updateDate() {
         mDateButton.setText(DateFormat.format("EEEE, MMM d, yyyy", mCrime.getDate()));
         mTimeButton.setText(DateFormat.format("h:mm a", mCrime.getDate()));
+    }
+
+    private String getCrimeReport() {
+        String solvedString = null;
+        if(mCrime.isSolved()) {
+            solvedString = getString(R.string.crime_report_solved);
+        } else {
+            solvedString = getString(R.string.crime_report_unsolved);
+        }
+        String dateFormat = "EEE, MMM dd";
+        String dateString = DateFormat.format(dateFormat, mCrime.getDate()).toString();
+        String suspect = mCrime.getSuspect();
+        if(suspect == null) {
+            suspect = getString(R.string.crime_report_no_suspect);
+        } else {
+            suspect = getString(R.string.crime_report_suspect, suspect);
+        }
+        String report = getString(R.string.crime_report, mCrime.getTitle(), dateString, solvedString, suspect);
+        return report;
     }
 
     @Override
@@ -151,12 +214,23 @@ public class CrimeFragment extends Fragment implements View.OnClickListener {
         DatePickerFragment dialog = DatePickerFragment.newInstance(mCrime.getDate());
         switch (v.getId()){
             case R.id.crime_date:
-                dialog.setTargetFragment(CrimeFragment.this, DatePickerFragment.REQUEST_DATE);
+                dialog.setTargetFragment(CrimeFragment.this, REQUEST_DATE);
                 dialog.show(manager, DIALOG_DATE);
                 break;
             case R.id.crime_time:
-                dialog.setTargetFragment(CrimeFragment.this, DatePickerFragment.REQUEST_TIME);
+                dialog.setTargetFragment(CrimeFragment.this, REQUEST_TIME);
                 dialog.show(manager, DIALOG_TIME);
+                break;
+            case R.id.crime_report:
+                Intent intent = new Intent(Intent.ACTION_SEND);
+                intent.setType("text/plain");
+                intent.putExtra(Intent.EXTRA_TEXT, getCrimeReport());
+                intent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.crime_report_subject));
+                intent = Intent.createChooser(intent, getString(R.string.send_report));
+                startActivity(intent);
+                break;
+            case R.id.crime_suspect:
+                startActivityForResult(pickContact, REQEST_CONTACT);
                 break;
             default:
                 break;

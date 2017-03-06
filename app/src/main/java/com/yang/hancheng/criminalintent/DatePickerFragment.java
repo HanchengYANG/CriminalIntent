@@ -25,8 +25,8 @@ import java.util.Date;
 
 public class DatePickerFragment extends DialogFragment {
 
-    public static final int REQUEST_DATE = 0;
-    public static final int REQUEST_TIME = 1;
+    private static final int REQUEST_DATE = 0;
+    private static final int REQUEST_TIME = 1;
 
     private static final String ARG_DATE = "date";
     public static final String EXTRA_DATE = "com.yang.hancheng.criminalintent.date";
