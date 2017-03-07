@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.media.Image;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
@@ -23,6 +24,9 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+
 import java.util.Date;
 import java.util.UUID;
 
@@ -51,6 +55,8 @@ public class CrimeFragment extends Fragment implements View.OnClickListener {
     private Button mSuspectButton;
     private Button mReportButton;
     private Button mCallSuspectButton;
+    private ImageButton mPhotoButton;
+    private ImageView mPhotoView;
     private CheckBox mSolvedCheckBox;
 
     private Intent pickContact;
@@ -99,12 +105,12 @@ public class CrimeFragment extends Fragment implements View.OnClickListener {
 
             }
         });
-
         mDateButton = (Button)v.findViewById(R.id.crime_date);
         mTimeButton = (Button)v.findViewById(R.id.crime_time);
         mReportButton = (Button)v.findViewById(R.id.crime_report);
         mSuspectButton = (Button)v.findViewById(R.id.crime_suspect);
         mCallSuspectButton = (Button)v.findViewById(R.id.crime_call_suspect);
+        mPhotoButton = (ImageButton)v.findViewById(R.id.crime_camera);
         mDateButton.setOnClickListener(this);
         mTimeButton.setOnClickListener(this);
         mReportButton.setOnClickListener(this);
@@ -121,7 +127,7 @@ public class CrimeFragment extends Fragment implements View.OnClickListener {
         if(packageManager.resolveActivity(pickContact, PackageManager.MATCH_DEFAULT_ONLY) == null) {
             mSuspectButton.setEnabled(false);
         }
-        updateDate();
+        mPhotoView = (ImageView)v.findViewById(R.id.crime_photo);
         mSolvedCheckBox = (CheckBox)v.findViewById(R.id.crime_solved);
         mSolvedCheckBox.setChecked(mCrime.isSolved());
         mSolvedCheckBox.setOnCheckedChangeListener( new CompoundButton.OnCheckedChangeListener() {
@@ -130,6 +136,7 @@ public class CrimeFragment extends Fragment implements View.OnClickListener {
                 mCrime.setSolved(b);
             }
         });
+        updateDate();
         return v;
     }
 
