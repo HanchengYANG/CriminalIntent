@@ -37,7 +37,7 @@ public class CrimeFragment extends Fragment implements View.OnClickListener {
 
     private static final int REQUEST_DATE = 0;
     private static final int REQUEST_TIME = 1;
-    private static final int REQEST_CONTACT = 2;
+    private static final int REQUEST_CONTACT = 2;
 
     private static final String ARG_CRIME_ID = "crime_id";
     private static final String DIALOG_DATE = "DialogDate";
@@ -50,6 +50,7 @@ public class CrimeFragment extends Fragment implements View.OnClickListener {
     private Button mTimeButton;
     private Button mSuspectButton;
     private Button mReportButton;
+    private Button mCallSuspectButton;
     private CheckBox mSolvedCheckBox;
 
     private Intent pickContact;
@@ -103,12 +104,17 @@ public class CrimeFragment extends Fragment implements View.OnClickListener {
         mTimeButton = (Button)v.findViewById(R.id.crime_time);
         mReportButton = (Button)v.findViewById(R.id.crime_report);
         mSuspectButton = (Button)v.findViewById(R.id.crime_suspect);
+        mCallSuspectButton = (Button)v.findViewById(R.id.crime_call_suspect);
         mDateButton.setOnClickListener(this);
         mTimeButton.setOnClickListener(this);
         mReportButton.setOnClickListener(this);
         mSuspectButton.setOnClickListener(this);
+        mCallSuspectButton.setOnClickListener(this);
         if(mCrime.getSuspect() != null){
             mSuspectButton.setText(mCrime.getSuspect());
+            mCallSuspectButton.setEnabled(true);
+        } else {
+            mCallSuspectButton.setEnabled(false);
         }
         PackageManager packageManager = getActivity().getPackageManager();
         pickContact = new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
@@ -150,7 +156,7 @@ public class CrimeFragment extends Fragment implements View.OnClickListener {
         if(resultCode != Activity.RESULT_OK || data == null){
             return;
         }
-        Date newDate = null;
+        Date newDate;
         switch (requestCode){
             case REQUEST_DATE:
                 newDate = (Date) data.getSerializableExtra(DatePickerFragment.EXTRA_DATE);
@@ -162,7 +168,7 @@ public class CrimeFragment extends Fragment implements View.OnClickListener {
                 mCrime.setDate(newDate);
                 updateDate();
                 break;
-            case REQEST_CONTACT:
+            case REQUEST_CONTACT:
                 Uri contactUri = data.getData();
                 String[] queryFields = new String[] {
                         ContactsContract.Contacts.DISPLAY_NAME
@@ -174,6 +180,7 @@ public class CrimeFragment extends Fragment implements View.OnClickListener {
                         String suspect = cursor.getString(0);
                         mCrime.setSuspect(suspect);
                         mSuspectButton.setText(suspect);
+                        mCallSuspectButton.setEnabled(true);
                     }
                 } finally {
                     cursor.close();
@@ -230,7 +237,29 @@ public class CrimeFragment extends Fragment implements View.OnClickListener {
                 startActivity(intent);
                 break;
             case R.id.crime_suspect:
-                startActivityForResult(pickContact, REQEST_CONTACT);
+                startActivityForResult(pickContact, REQUEST_CONTACT);
+                break;
+            case R.id.crime_call_suspect:
+                Uri uri = ContactsContract.CommonDataKinds.Phone.CONTENT_URI;
+                String[] projection = new String[]{
+                        ContactsContract.CommonDataKinds.Phone.NUMBER
+                };
+                String selection = ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + "= ?";
+                String[] selectionArgs = new String[] {
+                        mSuspectButton.getText().toString()
+                };
+                Cursor c = getActivity().getContentResolver().query(uri, projection, selection, selectionArgs, null);
+                try {
+                    if(c.getCount() != 0) {
+                        c.moveToFirst();
+                        String number = c.getString(c.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                        Uri numberUri = Uri.parse("tel:" +  number);
+                        Intent dial = new Intent(Intent.ACTION_DIAL, numberUri);
+                        startActivity(dial);
+                    }
+                } finally {
+                    c.close();
+                }
                 break;
             default:
                 break;
