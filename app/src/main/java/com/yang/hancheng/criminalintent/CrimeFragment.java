@@ -8,6 +8,7 @@ import android.media.Image;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -27,6 +28,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 
+import java.io.File;
 import java.util.Date;
 import java.util.UUID;
 
@@ -42,11 +44,11 @@ public class CrimeFragment extends Fragment implements View.OnClickListener {
     private static final int REQUEST_DATE = 0;
     private static final int REQUEST_TIME = 1;
     private static final int REQUEST_CONTACT = 2;
+    private static final int REQUEST_PHOTO = 3;
 
     private static final String ARG_CRIME_ID = "crime_id";
     private static final String DIALOG_DATE = "DialogDate";
     private static final String DIALOG_TIME = "DialogTime";
-
 
     private Crime mCrime;
     private EditText mTitleField;
@@ -59,7 +61,10 @@ public class CrimeFragment extends Fragment implements View.OnClickListener {
     private ImageView mPhotoView;
     private CheckBox mSolvedCheckBox;
 
+    private File mPhotoFile;
+
     private Intent pickContact;
+    private Intent captureImage;
 
     public static CrimeFragment newInstance(UUID crimeId){
         Bundle args = new Bundle();
@@ -75,6 +80,7 @@ public class CrimeFragment extends Fragment implements View.OnClickListener {
         UUID crimeId = (UUID) getArguments().getSerializable(ARG_CRIME_ID);
         mCrime = CrimeLab.get(getActivity()).getCrime(crimeId);
         setHasOptionsMenu(true);
+        mPhotoFile = CrimeLab.get(getActivity()).getPhotoFile(mCrime);
     }
 
     @Override
@@ -136,6 +142,14 @@ public class CrimeFragment extends Fragment implements View.OnClickListener {
                 mCrime.setSolved(b);
             }
         });
+        captureImage = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        boolean canTakePhoto = (mPhotoFile != null && captureImage.resolveActivity(packageManager) != null );
+        mPhotoButton.setEnabled(canTakePhoto);
+        if(canTakePhoto) {
+            Uri uri = Uri.fromFile(mPhotoFile);
+            captureImage.putExtra(MediaStore.EXTRA_OUTPUT, uri);
+        }
+        mPhotoButton.setOnClickListener(this);
         updateDate();
         return v;
     }
@@ -198,30 +212,6 @@ public class CrimeFragment extends Fragment implements View.OnClickListener {
         }
     }
 
-    private void updateDate() {
-        mDateButton.setText(DateFormat.format("EEEE, MMM d, yyyy", mCrime.getDate()));
-        mTimeButton.setText(DateFormat.format("h:mm a", mCrime.getDate()));
-    }
-
-    private String getCrimeReport() {
-        String solvedString = null;
-        if(mCrime.isSolved()) {
-            solvedString = getString(R.string.crime_report_solved);
-        } else {
-            solvedString = getString(R.string.crime_report_unsolved);
-        }
-        String dateFormat = "EEE, MMM dd";
-        String dateString = DateFormat.format(dateFormat, mCrime.getDate()).toString();
-        String suspect = mCrime.getSuspect();
-        if(suspect == null) {
-            suspect = getString(R.string.crime_report_no_suspect);
-        } else {
-            suspect = getString(R.string.crime_report_suspect, suspect);
-        }
-        String report = getString(R.string.crime_report, mCrime.getTitle(), dateString, solvedString, suspect);
-        return report;
-    }
-
     @Override
     public void onClick(View v) {
         FragmentManager manager = getFragmentManager();
@@ -268,9 +258,35 @@ public class CrimeFragment extends Fragment implements View.OnClickListener {
                     c.close();
                 }
                 break;
+            case R.id.crime_camera:
+                startActivityForResult(captureImage, REQUEST_PHOTO);
+                break;
             default:
                 break;
         }
+    }
 
+    private void updateDate() {
+        mDateButton.setText(DateFormat.format("EEEE, MMM d, yyyy", mCrime.getDate()));
+        mTimeButton.setText(DateFormat.format("h:mm a", mCrime.getDate()));
+    }
+
+    private String getCrimeReport() {
+        String solvedString = null;
+        if(mCrime.isSolved()) {
+            solvedString = getString(R.string.crime_report_solved);
+        } else {
+            solvedString = getString(R.string.crime_report_unsolved);
+        }
+        String dateFormat = "EEE, MMM dd";
+        String dateString = DateFormat.format(dateFormat, mCrime.getDate()).toString();
+        String suspect = mCrime.getSuspect();
+        if(suspect == null) {
+            suspect = getString(R.string.crime_report_no_suspect);
+        } else {
+            suspect = getString(R.string.crime_report_suspect, suspect);
+        }
+        String report = getString(R.string.crime_report, mCrime.getTitle(), dateString, solvedString, suspect);
+        return report;
     }
 }
