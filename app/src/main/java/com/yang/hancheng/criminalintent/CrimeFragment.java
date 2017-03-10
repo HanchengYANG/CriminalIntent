@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.media.Image;
 import android.net.Uri;
 import android.os.Bundle;
@@ -49,6 +50,7 @@ public class CrimeFragment extends Fragment implements View.OnClickListener {
     private static final String ARG_CRIME_ID = "crime_id";
     private static final String DIALOG_DATE = "DialogDate";
     private static final String DIALOG_TIME = "DialogTime";
+    private static final String DIALOG_PHOTO = "DialogPhoto";
 
     private Crime mCrime;
     private EditText mTitleField;
@@ -151,6 +153,7 @@ public class CrimeFragment extends Fragment implements View.OnClickListener {
         }
         mPhotoButton.setOnClickListener(this);
         updateDate();
+        updatePhotoView();
         return v;
     }
 
@@ -174,7 +177,7 @@ public class CrimeFragment extends Fragment implements View.OnClickListener {
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if(resultCode != Activity.RESULT_OK || data == null){
+        if(resultCode != Activity.RESULT_OK){
             return;
         }
         Date newDate;
@@ -206,6 +209,9 @@ public class CrimeFragment extends Fragment implements View.OnClickListener {
                 } finally {
                     cursor.close();
                 }
+                break;
+            case REQUEST_PHOTO:
+                updatePhotoView();
                 break;
             default:
                 break;
@@ -261,6 +267,10 @@ public class CrimeFragment extends Fragment implements View.OnClickListener {
             case R.id.crime_camera:
                 startActivityForResult(captureImage, REQUEST_PHOTO);
                 break;
+            case R.id.crime_photo:
+                CrimePhotoViewFragment photoViewDialog = CrimePhotoViewFragment.newInstance(mCrime.getId());
+                photoViewDialog.show(manager, DIALOG_PHOTO);
+                break;
             default:
                 break;
         }
@@ -269,6 +279,17 @@ public class CrimeFragment extends Fragment implements View.OnClickListener {
     private void updateDate() {
         mDateButton.setText(DateFormat.format("EEEE, MMM d, yyyy", mCrime.getDate()));
         mTimeButton.setText(DateFormat.format("h:mm a", mCrime.getDate()));
+    }
+
+    private void updatePhotoView() {
+        if(mPhotoFile == null || !mPhotoFile.exists()) {
+            mPhotoView.setImageDrawable(null);
+            mPhotoView.setOnClickListener(null);
+        } else {
+            Bitmap bitmap = PictureUtils.getScaledBitmap(mPhotoFile.getPath(), getActivity());
+            mPhotoView.setImageBitmap(bitmap);
+            mPhotoView.setOnClickListener(this);
+        }
     }
 
     private String getCrimeReport() {

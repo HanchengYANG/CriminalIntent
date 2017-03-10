@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Environment;
+import android.widget.Toast;
 
 import com.yang.hancheng.criminalintent.CrimeDbSchema.CrimeTable;
 
@@ -71,6 +72,10 @@ public class CrimeLab {
     }
 
     public void deleteCrime(Crime c) {
+        File photo = getPhotoFile(c);
+        if(photo.exists()) {
+            photo.delete();
+        }
         mDatabase.delete(CrimeTable.NAME, CrimeTable.Cols.UUID + " = ?", new String[]{c.getId().toString()});
     }
 
