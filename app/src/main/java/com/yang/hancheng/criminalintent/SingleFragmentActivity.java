@@ -1,8 +1,13 @@
 package com.yang.hancheng.criminalintent;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 
 /**
@@ -13,15 +18,21 @@ import android.support.v7.app.AppCompatActivity;
  **/
 
 public abstract class SingleFragmentActivity extends AppCompatActivity {
+    private FragmentManager fm;
+    private Fragment mFragment;
     protected abstract Fragment createFragment();
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_fragment);
-        FragmentManager fm = getSupportFragmentManager();
-        Fragment fragment = fm.findFragmentById(R.id.fragment_container);
-        if(fragment == null){
+        fm = getSupportFragmentManager();
+        mFragment = fm.findFragmentById(R.id.fragment_container);
+        startFragment(mFragment);
+    }
+
+    private void startFragment(Fragment fragment) {
+        if(fragment == null) {
             fragment = createFragment();
             fm.beginTransaction().add(R.id.fragment_container, fragment).commit();
         }
