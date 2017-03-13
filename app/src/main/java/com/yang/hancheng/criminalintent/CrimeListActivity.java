@@ -8,12 +8,15 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 
+
 /**
  * Project : CriminalIntent
  * Created by Hancheng Yang ( hancheng.yang@eptender.com )
  * Date : 21/02/2017, 15:24
  * Description :
  **/
+
+
 public class CrimeListActivity extends SingleFragmentActivity {
     private static final String KEY_PERMISSION = "permission";
     private static final int REQ_PERMISSION = 1;
@@ -25,8 +28,8 @@ public class CrimeListActivity extends SingleFragmentActivity {
         if(savedInstanceState != null) {
             reqGranted = savedInstanceState.getBoolean(KEY_PERMISSION);
         }
-        if( !reqGranted ) {
-            reqGranted = checkPermission();
+        if(!reqGranted) {
+            requestPermission();
         }
     }
 
@@ -41,7 +44,7 @@ public class CrimeListActivity extends SingleFragmentActivity {
         return new CrimeListFragment();
     }
 
-    private boolean checkPermission() {
+    private boolean requestPermission() {
         int permissionCheck = ContextCompat.checkSelfPermission(this,
                 Manifest.permission.WRITE_CALENDAR);
         if(permissionCheck == PackageManager.PERMISSION_GRANTED) {
