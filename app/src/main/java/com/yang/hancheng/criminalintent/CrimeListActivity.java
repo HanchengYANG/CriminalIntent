@@ -8,6 +8,9 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 
+import java.util.ArrayList;
+import java.util.List;
+
 
 /**
  * Project : CriminalIntent
@@ -45,18 +48,35 @@ public class CrimeListActivity extends SingleFragmentActivity {
     }
 
     private boolean requestPermission() {
-        int permissionCheck = ContextCompat.checkSelfPermission(this,
-                Manifest.permission.WRITE_CALENDAR);
-        if(permissionCheck == PackageManager.PERMISSION_GRANTED) {
+        int permissionCheckReadContacts = ContextCompat.checkSelfPermission(this,
+                Manifest.permission.READ_CONTACTS);
+        int permissionCheckReadExStorage = ContextCompat.checkSelfPermission(this,
+                Manifest.permission.READ_EXTERNAL_STORAGE);
+        int permissionCheckWriteExStorage = ContextCompat.checkSelfPermission(this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        List<String> permission = new ArrayList<>();
+        if(permissionCheckReadContacts != PackageManager.PERMISSION_GRANTED) {
+            permission.add(Manifest.permission.READ_CONTACTS);
+        }
+        if(permissionCheckReadExStorage != PackageManager.PERMISSION_GRANTED) {
+            permission.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+        }
+        if(permissionCheckWriteExStorage != PackageManager.PERMISSION_GRANTED) {
+            permission.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        }
+        if(permission.isEmpty()){
             return true;
         } else {
-            // start request on run time
-            ActivityCompat.requestPermissions(this,
-                    new String[]{
-                            Manifest.permission.READ_CONTACTS,
-                            Manifest.permission.READ_EXTERNAL_STORAGE,
-                            Manifest.permission.WRITE_EXTERNAL_STORAGE
-                    }, REQ_PERMISSION);
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    Manifest.permission.READ_CONTACTS) ||
+                ActivityCompat.shouldShowRequestPermissionRationale(this,
+                        Manifest.permission.READ_EXTERNAL_STORAGE) ||
+                ActivityCompat.shouldShowRequestPermissionRationale(this,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                ActivityCompat.requestPermissions(this, permission.toArray(new String[permission.size()]), REQ_PERMISSION);
+            } else {
+                ActivityCompat.requestPermissions(this, permission.toArray(new String[permission.size()]), REQ_PERMISSION);
+            }
             return false;
         }
     }
@@ -65,11 +85,10 @@ public class CrimeListActivity extends SingleFragmentActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         switch (requestCode) {
             case REQ_PERMISSION:
-                if( grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    reqGranted = true;
-                } else {
-                    finish();
+                if( grantResults.length > 0) {
+                    if(requestPermission()) {
+                        reqGranted = true;
+                    }
                 }
                 break;
             default:
