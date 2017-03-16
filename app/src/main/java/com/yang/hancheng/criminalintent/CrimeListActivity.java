@@ -1,6 +1,7 @@
 package com.yang.hancheng.criminalintent;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -20,7 +21,8 @@ import java.util.List;
  **/
 
 
-public class CrimeListActivity extends SingleFragmentActivity {
+public class CrimeListActivity extends SingleFragmentActivity
+        implements CrimeListFragment.Callbacks, CrimeFragment.Callbacks{
     private static final String KEY_PERMISSION = "permission";
     private static final int REQ_PERMISSION = 1;
     private static boolean reqGranted = false;
@@ -95,5 +97,41 @@ public class CrimeListActivity extends SingleFragmentActivity {
                 super.onRequestPermissionsResult(requestCode, permissions, grantResults);
                 break;
         }
+    }
+
+    @Override
+    protected int getLayoutResId() {
+        return R.layout.activity_masterdetail;
+    }
+
+    @Override
+    public void onCrimeSelected(Crime crime) {
+        if(findViewById(R.id.detail_fragment_container) == null) {
+            Intent intent = CrimePagerActivity.newIntent(this, crime.getId());
+            startActivity(intent);
+        } else {
+            Fragment newDetail = CrimeFragment.newInstance(crime.getId());
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.detail_fragment_container, newDetail)
+                    .commit();
+        }
+    }
+
+    @Override
+    public void onCrimeSolvedChanged() {
+        if(findViewById(R.id.detail_fragment_container) != null) {
+            CrimeFragment crimeFragment = (CrimeFragment)getSupportFragmentManager()
+                    .findFragmentById(R.id.detail_fragment_container);
+            if(crimeFragment != null) {
+                crimeFragment.updateSolved();
+            }
+        }
+    }
+
+    @Override
+    public void onCrimeUpdated(Crime crime) {
+        CrimeListFragment listFragment = (CrimeListFragment)getSupportFragmentManager()
+                .findFragmentById(R.id.fragment_container);
+        listFragment.updateUI();
     }
 }

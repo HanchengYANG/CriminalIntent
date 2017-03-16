@@ -1,6 +1,7 @@
 package com.yang.hancheng.criminalintent;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -68,12 +69,30 @@ public class CrimeFragment extends Fragment implements View.OnClickListener {
     private Intent pickContact;
     private Intent captureImage;
 
+    private Callbacks mCallbacks;
+
+    public interface Callbacks {
+        void onCrimeUpdated(Crime crime);
+    }
+
     public static CrimeFragment newInstance(UUID crimeId){
         Bundle args = new Bundle();
         args.putSerializable(ARG_CRIME_ID, crimeId);
         CrimeFragment fragment = new CrimeFragment();
         fragment.setArguments(args);
         return fragment;
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        mCallbacks = (Callbacks)context;
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mCallbacks = null;
     }
 
     @Override
@@ -106,6 +125,7 @@ public class CrimeFragment extends Fragment implements View.OnClickListener {
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
                 mCrime.setTitle(charSequence.toString());
+                updateCrime();
             }
 
             @Override
@@ -142,6 +162,7 @@ public class CrimeFragment extends Fragment implements View.OnClickListener {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
                 mCrime.setSolved(b);
+                updateCrime();
             }
         });
         captureImage = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -168,7 +189,15 @@ public class CrimeFragment extends Fragment implements View.OnClickListener {
         switch (item.getItemId()){
             case R.id.menu_item_delete_crime:
                 CrimeLab.get(getActivity()).deleteCrime(mCrime);
-                getActivity().finish();
+                if(getActivity().findViewById(R.id.detail_fragment_container) == null) {
+                    getActivity().finish();
+                } else {
+                    getActivity().getSupportFragmentManager()
+                            .beginTransaction()
+                            .remove(getActivity().getSupportFragmentManager().findFragmentById(R.id.detail_fragment_container))
+                            .commit();
+                    mCallbacks.onCrimeUpdated(null);
+                }
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -186,11 +215,13 @@ public class CrimeFragment extends Fragment implements View.OnClickListener {
                 newDate = (Date) data.getSerializableExtra(DatePickerFragment.EXTRA_DATE);
                 mCrime.setDate(newDate);
                 updateDate();
+                updateCrime();
                 break;
             case REQUEST_TIME:
                 newDate = (Date) data.getSerializableExtra(DatePickerFragment.EXTRA_TIME);
                 mCrime.setDate(newDate);
                 updateDate();
+                updateCrime();
                 break;
             case REQUEST_CONTACT:
                 Uri contactUri = data.getData();
@@ -276,9 +307,19 @@ public class CrimeFragment extends Fragment implements View.OnClickListener {
         }
     }
 
+    public void updateSolved() {
+        mCrime = CrimeLab.get(getActivity()).getCrime(mCrime.getId());
+        mSolvedCheckBox.setChecked(mCrime.isSolved());
+    }
+
     private void updateDate() {
         mDateButton.setText(DateFormat.format("EEEE, MMM d, yyyy", mCrime.getDate()));
         mTimeButton.setText(DateFormat.format("h:mm a", mCrime.getDate()));
+    }
+
+    private void updateCrime() {
+        CrimeLab.get(getActivity()).updateCrime(mCrime);
+        mCallbacks.onCrimeUpdated(mCrime);
     }
 
     private void updatePhotoView() {
@@ -293,7 +334,7 @@ public class CrimeFragment extends Fragment implements View.OnClickListener {
     }
 
     private String getCrimeReport() {
-        String solvedString = null;
+        String solvedString;
         if(mCrime.isSolved()) {
             solvedString = getString(R.string.crime_report_solved);
         } else {
